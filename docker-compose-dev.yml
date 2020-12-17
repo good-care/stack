@@ -1,0 +1,28 @@
+networks:
+  goodcare:
+    driver: bridge
+
+services:
+  db:
+    image: postgres
+    container_name: goodcare-postgresql-dev
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pwd}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+    ports:
+      - ${DB_PORT:-5432}:5432
+    networks:
+      - goodcare
+
+  react:
+    build:
+      context: ../goodcare_react_app
+      dockerfile: Dockerfile
+    image: goodcare-react-app-image
+    container_name: goodcare-react-app-dev
+    ports:
+      - ${REACT_PORT:-80}:80
+    networks:
+      - goodcare
