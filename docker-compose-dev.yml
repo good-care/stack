@@ -26,3 +26,14 @@ services:
       - ${REACT_PORT:-80}:80
     networks:
       - goodcare
+
+  php:
+    build:
+      context: ../goodcare_php_rest_api
+      dockerfile: Dockerfile
+    image: goodcare-php-api-image
+    container_name: goodcare-php-api-dev
+    ports:
+      - ${PHP_PORT:-8000}:8000
+    networks:
+      - goodcare
