@@ -33,6 +33,12 @@ services:
       dockerfile: Dockerfile
     image: goodcare-php-api-image
     container_name: goodcare-php-api-dev
+    environment:
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_USERNAME: ${DB_USERNAME:-user}
+      DB_PASSWORD: ${DB_PASSWORD:-pwd}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
     ports:
       - ${PHP_PORT:-8000}:8000
     networks:
