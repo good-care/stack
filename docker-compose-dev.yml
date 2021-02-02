@@ -1,6 +1,8 @@
 networks:
   goodcare:
     driver: bridge
+volumes:
+  goodcare_db_volume:
 
 services:
   db:
@@ -11,10 +13,23 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-pwd}
       POSTGRES_DB: ${DB_NAME:-postgres}
+    volumes:
+      - goodcare_db_volume:/var/lib/postgresql/data
     ports:
       - ${DB_PORT:-5432}:5432
     networks:
       - goodcare
+
+  rabbitmq:
+    image: rabbitmq:alpine
+    container_name: goodcare-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RMQ_USERNAME:-user}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD:-pwd}
+    ports:
+      - ${RMQ_API_PORT:-5672}:5672
+      - ${RMQ_HTTP_API_PORT:-15672}:15672
 
   react:
     build:
@@ -38,7 +53,9 @@ services:
       DB_USERNAME: ${DB_USERNAME:-user}
       DB_PASSWORD: ${DB_PASSWORD:-pwd}
       DB_NAME: ${DB_NAME:-postgres}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_PORT: 5432
+      DB_HOST: db
+      TOKEN_KEY: ${TOKEN_KEY:-secret_key}
     ports:
       - ${PHP_PORT:-8000}:8000
     networks:
