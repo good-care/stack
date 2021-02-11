@@ -20,7 +20,7 @@ services:
     networks:
       - goodcare
 
-  rabbitmq:
+  rmq:
     image: rabbitmq:alpine
     container_name: goodcare-rabbitmq
     restart: always
@@ -30,11 +30,69 @@ services:
     ports:
       - ${RMQ_API_PORT:-5672}:5672
       - ${RMQ_HTTP_API_PORT:-15672}:15672
+    networks:
+      - goodcare
+
+  moex:
+    build:
+      context: ../goodcare_moex_info
+      dockerfile: Dockerfile
+    depends_on:
+      - "db"
+      - "rmq"
+      - "scheduler"
+    image: goodcare-moex-info-image
+    container_name: goodcare-moex-info-dev
+    restart: always
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-user}
+      DB_PASSWORD: ${DB_PASSWORD:-pwd}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_PORT: 5432
+      DB_HOST: db
+      RMQ_HOST: rmq
+      RMQ_API_PORT: 5672
+      RMQ_USERNAME: ${RMQ_USERNAME:-user}
+      RMQ_PASSWORD: ${RMQ_PASSWORD:-pwd}
+    ports:
+      - ${MOEX_INFO_PORT:-9096}:9096
+    networks:
+      - goodcare
+
+  scheduler:
+    build:
+      context: ../goodcare_scheduler
+      dockerfile: Dockerfile
+    depends_on:
+      - "db"
+      - "rmq"
+    image: goodcare-scheduler-image
+    container_name: goodcare-scheduler-dev
+    restart: always
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-user}
+      DB_PASSWORD: ${DB_PASSWORD:-pwd}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_PORT: 5432
+      DB_HOST: db
+      RMQ_HOST: rmq
+      RMQ_API_PORT: 5672
+      RMQ_USERNAME: ${RMQ_USERNAME:-user}
+      RMQ_PASSWORD: ${RMQ_PASSWORD:-pwd}
+    ports:
+      - ${SCHEDULER_PORT:-9097}:9097
+    networks:
+      - goodcare
 
   react:
     build:
       context: ../goodcare_react_app
       dockerfile: Dockerfile
+      args:
+        REACT_PHP_API_HOST: ${REACT_PHP_API_HOST:-localhost}
+        REACT_PHP_API_PORT: ${REACT_PHP_API_PORT:-8000}
+    depends_on:
+      - "php"
     image: goodcare-react-app-image
     container_name: goodcare-react-app-dev
     ports:
@@ -46,6 +104,8 @@ services:
     build:
       context: ../goodcare_php_rest_api
       dockerfile: Dockerfile
+    depends_on:
+      - "db"
     image: goodcare-php-api-image
     container_name: goodcare-php-api-dev
     environment:
@@ -55,7 +115,7 @@ services:
       DB_NAME: ${DB_NAME:-postgres}
       DB_PORT: 5432
       DB_HOST: db
-      TOKEN_KEY: ${TOKEN_KEY:-secret_key}
+      PHP_TOKEN_KEY: ${PHP_TOKEN_KEY:-secret_key}
     ports:
       - ${PHP_PORT:-8000}:8000
     networks:
